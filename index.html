@@ -412,7 +412,7 @@
             generateQRCode();
         };
 
-        // NAVEGACIÓN ENTRE CLIENTA Y ADMIN
+        // NAVEGACIÓN ENTRE CLIENTA Y ADMIN CON CONTRASEÑA
         function switchView(view) {
             const clientView = document.getElementById('view-client');
             const adminView = document.getElementById('view-admin');
@@ -425,10 +425,18 @@
                 tabClient.className = "px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 bg-white text-brand-600 shadow-sm";
                 tabAdmin.className = "px-4 py-1.5 rounded-full text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all duration-300";
             } else {
-                clientView.classList.add('hidden');
-                adminView.classList.remove('hidden');
-                tabAdmin.className = "px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 bg-white text-brand-600 shadow-sm";
-                tabClient.className = "px-4 py-1.5 rounded-full text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all duration-300";
+                // Pedir contraseña antes de abrir el panel de admin
+                let passwordSecreta = "angelica2026"; // <--- AQUÍ PUEDES CAMBIAR LA CONTRASEÑA
+                let ingreso = prompt("Ingresa la contraseña de administración:");
+
+                if (ingreso === passwordSecreta) {
+                    clientView.classList.add('hidden');
+                    adminView.classList.remove('hidden');
+                    tabAdmin.className = "px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 bg-white text-brand-600 shadow-sm";
+                    tabClient.className = "px-4 py-1.5 rounded-full text-xs font-semibold text-gray-500 hover:text-gray-600 transition-all duration-300";
+                } else if (ingreso !== null) {
+                    alert("Contraseña incorrecta. Acceso denegado.");
+                }
             }
         }
 

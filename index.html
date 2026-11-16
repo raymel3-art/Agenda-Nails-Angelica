@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nails Studio - Agenda tu Cita</title>
+    <title>Angélica Oliva - Nails Studio</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -18,16 +18,17 @@
                 extend: {
                     colors: {
                         brand: {
-    50: '#faf7f2',   // Fondos suaves
-    100: '#f3ece0',  // Bordes sutiles
-    200: '#e5d6be',
-    300: '#d5bd99',
-    400: '#c5a374',
-    500: '#b38f2a',  // Botones principales (Dorado)
-    600: '#8c6d1f',  // Textos y estados activos
-    gold: '#d4af37',
-    cream: '#faf8f5' // Fondo general de la web
-}
+                            50: '#faf7f2',
+                            100: '#f3ece0',
+                            200: '#e5d6be',
+                            300: '#d5bd99',
+                            400: '#c5a374',
+                            500: '#b38f2a',
+                            600: '#8c6d1f',
+                            gold: '#d4af37',
+                            golddark: '#b38f2a',
+                            cream: '#faf8f5'
+                        }
                     },
                     fontFamily: {
                         sans: ['Plus Jakarta Sans', 'sans-serif'],
@@ -46,7 +47,7 @@
             border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #f687b3;
+            background: #b38f2a;
             border-radius: 10px;
         }
     </style>
@@ -54,10 +55,9 @@
 <body class="bg-brand-cream min-h-screen font-sans text-gray-800 antialiased pb-12">
 
     <!-- Header / Navbar Navigation -->
-  <header class="bg-white/85 backdrop-blur-md sticky top-0 z-40 border-b border-brand-200 shadow-sm">
+    <header class="bg-white/85 backdrop-blur-md sticky top-0 z-40 border-b border-brand-200 shadow-sm">
         <div class="max-w-4xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <!-- Logo en su espacio original -->
                 <div class="w-10 h-10 rounded-full bg-white border border-brand-200 overflow-hidden shadow-sm flex items-center justify-center shrink-0">
                     <img src="logo.jpg" alt="Logo Angélica Oliva" class="w-full h-full object-cover">
                 </div>
@@ -79,19 +79,6 @@
         </div>
     </header>
 
-            <!-- View Switcher Tabs -->
-            <div class="flex bg-brand-50 p-1 rounded-full border border-brand-100 shadow-inner">
-                <button id="tab-client" onclick="switchView('client')" class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 bg-white text-brand-600 shadow-sm">
-                    <i class="fa-solid font-normal fa-calendar-check mr-1">
-                    </i>Reservar
-                </button>
-                <button id="tab-admin" onclick="switchView('admin')" class="px-4 py-1.5 rounded-full text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all duration-300">
-                    <i class="fa-solid fa-user-gear mr-1"></i>Admin
-                </button>
-            </div>
-        </div>
-    </header>
-
     <main class="max-w-4xl mx-auto px-4 mt-6">
 
         <!-- ==================== VISTA CLIENTA ==================== -->
@@ -105,7 +92,7 @@
             </div>
 
             <!-- Wizard Steps / Progress -->
-            <div class="bg-white rounded-2xl p-4 shadow-sm border border-brand-100 flex justify-around text-center text-xs font-medium">
+            <div class="bg-white rounded-2xl p-4 shadow-sm border border-brand-200 flex justify-around text-center text-xs font-medium">
                 <div id="step-ind-1" class="flex flex-col items-center text-brand-500 font-bold">
                     <span class="w-7 h-7 rounded-full bg-brand-500 text-white flex items-center justify-center mb-1 text-sm shadow">1</span>
                     Servicios
@@ -121,7 +108,7 @@
             </div>
 
             <!-- Form Container -->
-            <form id="booking-form" onsubmit="handleBookingSubmit(event)" class="bg-white rounded-3xl shadow-sm border border-brand-100 p-6 space-y-6">
+            <form id="booking-form" onsubmit="handleBookingSubmit(event)" class="bg-white rounded-3xl shadow-sm border border-brand-200 p-6 space-y-6">
                 
                 <!-- PASO 1: Selección de Servicios -->
                 <div id="step-1" class="space-y-4">
@@ -152,7 +139,7 @@
                     </h3>
                     
                     <!-- Calendario Diciembre -->
-                    <div class="border border-brand-100 rounded-2xl p-4 bg-brand-50/30">
+                    <div class="border border-brand-200 rounded-2xl p-4 bg-brand-50/30">
                         <div class="grid grid-cols-7 gap-1 text-center font-bold text-xs text-gray-400 mb-2">
                             <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
                         </div>
@@ -192,7 +179,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1">WhatsApp / Teléfono *</label>
-                            <input type="tel" id="client-phone" required placeholder="Ej. 58 4121235678" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-300 focus:border-brand-500 outline-none text-sm">
+                            <input type="tel" id="client-phone" required placeholder="Ej. +52 55 1234 5678" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:ring-2 focus:ring-brand-300 focus:border-brand-500 outline-none text-sm">
                         </div>
                         <div>
                             <label class="block text-xs font-semibold text-gray-700 mb-1">Notas especiales (opcional)</label>
@@ -201,7 +188,7 @@
                     </div>
 
                     <!-- Resumen rápido -->
-                    <div class="bg-brand-50 p-4 rounded-xl border border-brand-100 text-xs space-y-1">
+                    <div class="bg-brand-50 p-4 rounded-xl border border-brand-200 text-xs space-y-1">
                         <div class="font-bold text-brand-600 mb-1">Resumen de tu Reserva:</div>
                         <div><strong>Fecha:</strong> <span id="summary-date">-</span></div>
                         <div><strong>Hora:</strong> <span id="summary-time">-</span></div>
@@ -244,7 +231,7 @@
         <!-- ==================== PANEL ADMINISTRACIÓN ==================== -->
         <div id="view-admin" class="space-y-6 hidden">
             <!-- Header Panel -->
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm border border-brand-100">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-3xl shadow-sm border border-brand-200">
                 <div>
                     <h2 class="font-serif font-bold text-2xl text-gray-800">Panel de Control de Citas</h2>
                     <p class="text-xs text-gray-500">Gestiona las reservas de diciembre, bloquea horarios y envía recordatorios.</p>
@@ -252,11 +239,11 @@
                 
                 <!-- Quick Stats -->
                 <div class="flex gap-2">
-                    <div class="bg-brand-50 px-4 py-2 rounded-2xl border border-brand-100 text-center">
+                    <div class="bg-brand-50 px-4 py-2 rounded-2xl border border-brand-200 text-center">
                         <span class="block text-xs text-gray-500">Total Citas</span>
                         <span class="font-bold text-lg text-brand-600" id="stat-total-citas">0</span>
                     </div>
-                    <div class="bg-green-50 px-4 py-2 rounded-2xl border border-green-100 text-center">
+                    <div class="bg-green-50 px-4 py-2 rounded-2xl border border-green-200 text-center">
                         <span class="block text-xs text-gray-500">Confirmadas</span>
                         <span class="font-bold text-lg text-green-600" id="stat-confirmadas">0</span>
                     </div>
@@ -278,7 +265,7 @@
 
             <!-- TAB 1: LISTA DE CITAS -->
             <div id="admin-tab-appointments" class="space-y-4">
-                <div class="bg-white rounded-3xl shadow-sm border border-brand-100 overflow-hidden">
+                <div class="bg-white rounded-3xl shadow-sm border border-brand-200 overflow-hidden">
                     <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
                         <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Citas de Diciembre</span>
                         <button onclick="renderAdminAppointments()" class="text-xs text-brand-600 hover:underline"><i class="fa-solid fa-rotate mr-1"></i>Actualizar</button>
@@ -306,7 +293,7 @@
 
             <!-- TAB 2: BLOQUEO DE FECHAS/HORAS -->
             <div id="admin-tab-blocks" class="space-y-4 hidden">
-                <div class="bg-white rounded-3xl p-6 shadow-sm border border-brand-100 space-y-4">
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-brand-200 space-y-4">
                     <h3 class="font-serif font-bold text-lg text-gray-800">Bloquear Horarios para Descanso o Personal</h3>
                     <p class="text-xs text-gray-500">Selecciona un día de Diciembre y deshabilita el día completo o un turno específico.</p>
                     
@@ -346,11 +333,11 @@
 
             <!-- TAB 3: GENERADOR QR -->
             <div id="admin-tab-qr" class="space-y-4 hidden">
-                <div class="bg-white rounded-3xl p-6 shadow-sm border border-brand-100 text-center max-w-md mx-auto space-y-4">
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-brand-200 text-center max-w-md mx-auto space-y-4">
                     <h3 class="font-serif font-bold text-lg text-gray-800">Código QR del Estudio</h3>
                     <p class="text-xs text-gray-500">Imprime este código QR y colócalo en tu mostrador o compártelo en redes sociales para que tus clientas agenden directo.</p>
                     
-                    <div class="p-4 bg-brand-50 rounded-2xl border border-brand-100 inline-block shadow-inner">
+                    <div class="p-4 bg-brand-50 rounded-2xl border border-brand-200 inline-block shadow-inner">
                         <div id="qrcode-container" class="flex justify-center"></div>
                     </div>
 
@@ -379,7 +366,7 @@
 
         const TIME_SLOTS = ["08:00 AM", "10:00 AM", "02:00 PM", "05:00 PM", "07:00 PM"];
 
-        // ESTADO GLOBAL EN MEMORIA
+        // ESTADO GLOBAL EN MEMORIA (Citas limpias de prueba vacías si lo deseas, o ajustas a tu gusto)
         let state = {
             selectedServices: [],
             selectedDate: null,
@@ -523,7 +510,6 @@
             for(let day=1; day<=31; day++) {
                 const dateStr = `2026-12-${day.toString().padStart(2, '0')}`;
                 
-                // Un día solo se tacha completo si se bloqueó como 'ALL'
                 const isFullyBlocked = state.blockedSlots.some(b => b.date === dateStr && b.time === 'ALL');
                 const isSelected = state.selectedDate === dateStr;
 
@@ -553,7 +539,7 @@
             document.getElementById('btn-to-step-3').disabled = true;
         }
 
-        // RENDER DE HORARIOS DISPONIBLES (ÚNICA FUNCIÓN LIMPIA)
+        // RENDER DE HORARIOS DISPONIBLES
         function renderTimeSlots(dateStr) {
             const container = document.getElementById('slots-container');
             const slotsDiv = document.getElementById('time-slots');
@@ -785,11 +771,11 @@
             const container = document.getElementById('qrcode-container');
             container.innerHTML = '';
             new QRCode(container, {
-                text: window.location.href,
+                text: "https://tinyurl.com/agenda-angelica", // Cambia por tu TinyURL si ya lo creaste
                 width: 180,
                 height: 180,
-                colorDark : "#b83280",
-                colorLight : "#ffffff",
+                colorDark : "#b38f2a",
+                colorLight : "#faf8f5",
                 correctLevel : QRCode.CorrectLevel.H
             });
         }

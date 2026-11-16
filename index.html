@@ -11,10 +11,6 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
     
-    <!-- Firebase Cloud Sync -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-
     <script>
         tailwind.config = {
             theme: {
@@ -160,8 +156,8 @@
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-brand-200 space-y-6">
                 <div class="flex justify-between items-center border-b pb-4">
                     <div>
-                        <h2 class="font-serif font-bold text-xl text-gray-800">Panel de Administración (Nube)</h2>
-                        <p class="text-xs text-gray-500 mt-0.5">Control sincronizado en tiempo real para Diciembre 2026.</p>
+                        <h2 class="font-serif font-bold text-xl text-gray-800">Panel de Administración Cloud</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Control sincronizado en tiempo real con Firebase.</p>
                     </div>
                     <button onclick="switchView('client')" class="text-xs text-brand-600 font-semibold hover:underline">
                         <i class="fa-solid fa-arrow-left mr-1"></i> Ver Página Pública
@@ -309,24 +305,44 @@
         </div>
     </div>
 
-    <!-- SCRIPTS CONECTADOS A FIREBASE -->
-    <script>
-        // CONFIGURACIÓN DE FIREBASE (Base de datos en la nube gratuita)
+    <!-- FIREBASE SDKs (Modular v9/v10) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // Tus credenciales reales de Firebase
         const firebaseConfig = {
-            apiKey: "AIzaSyDummyKeyForAngelicaNailsStudio2026",
-            authDomain: "angelica-nails-db.firebaseapp.com",
-            projectId: "angelica-nails-db-2026",
-            storageBucket: "angelica-nails-db.appspot.com",
-            messagingSenderId: "1234567890",
-            appId: "1:1234567890:web:abcdef"
+            apiKey: "AIzaSyDA_b1zaRbpZvq6E6llO9K2mCwzn9xFjho",
+            authDomain: "angelica-nails-9d24a.firebaseapp.com",
+            projectId: "angelica-nails-9d24a",
+            storageBucket: "angelica-nails-9d24a.firebasestorage.app",
+            messagingSenderId: "481910501267",
+            appId: "1:481910501267:web:eaaa77cf0f68ca68d0c266",
+            measurementId: "G-SFQ1HCF3D0"
         };
 
-        // Inicializar Firebase (usando Firestore offline fallback si es necesario)
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
-        const db = firebase.firestore();
+        // Inicializar Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
+        // Exponer funciones globales para que el HTML las invoque
+        window.db = db;
+        window.collection = collection;
+        window.getDocs = getDocs;
+        window.addDoc = addDoc;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+
+        // Cargar citas al iniciar la página
+        window.onload = function() {
+            renderServices();
+            renderDecemberCalendar();
+            loadAppointmentsFromCloud();
+        };
+    </script>
+
+    <!-- LÓGICA DE LA AGENDA Y UI -->
+    <script>
         const servicesList = [
             { id: 's1', name: 'Esmaltado Semi-Permanente', price: 8, duration: '1.5 Horas' },
             { id: 's2', name: 'Nivelación de Uña Natural', price: 15, duration: '2 Horas' },
@@ -344,32 +360,9 @@
             appointments: []
         };
 
-        window.onload = function() {
-            renderServices();
-            loadAppointmentsFromCloud();
-        };
-
-        // CARGAR CITAS DESDE LA NUBE EN TIEMPO REAL
-        function loadAppointmentsFromCloud() {
-            db.collection("citas_diciembre_2026").onSnapshot((snapshot) => {
-                state.appointments = [];
-                snapshot.forEach((doc) => {
-                    state.appointments.push({ id: doc.id, ...doc.data() });
-                });
-                renderDecemberCalendar();
-                if(document.getElementById('view-admin').classList.contains('hidden') === false) {
-                    renderAdminAppointments();
-                }
-            }, (error) => {
-                console.log("Modo local temporal activado por error de red:", error);
-                // Respaldo local si falla la red momentáneamente
-                state.appointments = JSON.parse(localStorage.getItem('ao_december_appointments')) || [];
-                renderDecemberCalendar();
-            });
-        }
-
         function renderServices() {
             const container = document.getElementById('services-container');
+            if(!container) return;
             container.innerHTML = servicesList.map(s => `
                 <label class="flex items-center justify-between p-3 rounded-2xl border border-brand-200 hover:bg-brand-50/50 cursor-pointer transition-all">
                     <div class="flex items-center space-x-3">
@@ -394,6 +387,27 @@
                 state.selectedServices.push(service);
             }
             updateBookingSummary();
+        }
+
+        async function loadAppointmentsFromCloud() {
+            try {
+                if (!window.db) {
+                    setTimeout(loadAppointmentsFromCloud, 500);
+                    return;
+                }
+                const querySnapshot = await window.getDocs(window.collection(window.db, "citas_diciembre_2026"));
+                state.appointments = [];
+                querySnapshot.forEach((docSnap) => {
+                    state.appointments.push({ idDoc: docSnap.id, ...docSnap.data() });
+                });
+                renderDecemberCalendar();
+                renderAdminAppointments();
+                if (state.selectedDate) {
+                    renderTimeSlots();
+                }
+            } catch (error) {
+                console.error("Error cargando citas de la nube:", error);
+            }
         }
 
         function renderDecemberCalendar() {
@@ -489,8 +503,7 @@
             }
         }
 
-        // GUARDAR CITA DESDE EL CLIENTE DIRECTO A LA NUBE
-        function handleClientBooking(e) {
+        async function handleClientBooking(e) {
             e.preventDefault();
             const name = document.getElementById('client-name').value.trim();
             const phone = document.getElementById('client-phone').value.trim();
@@ -505,16 +518,21 @@
                 services: state.selectedServices.map(s => s.name),
                 total: total,
                 status: 'Confirmada',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: Date.now()
             };
 
-            db.collection("citas_diciembre_2026").add(newAppointment).then(() => {
+            try {
+                await window.addDoc(window.collection(window.db, "citas_diciembre_2026"), newAppointment);
+                
                 const mensaje = `Hola Angélica! 💅 Quisiera confirmar mi cita agendada en la web:%0A%0A*Clienta:* ${name}%0A*Teléfono:* ${phone}%0A*Fecha:* ${state.selectedDate}%0A*Hora:* ${state.selectedTime}%0A*Servicios:* ${serviceNames}%0A*Total:* $${total.toFixed(2)}`;
                 window.open(`https://wa.me/584125689028?text=${mensaje}`, '_blank');
+
                 document.getElementById('success-modal').classList.remove('hidden');
-            }).catch(error => {
-                alert("Error al guardar en la nube: " + error.message);
-            });
+                loadAppointmentsFromCloud();
+            } catch (error) {
+                console.error("Error guardando cita:", error);
+                alert("Hubo un error al registrar la cita en la nube. Inténtalo de nuevo.");
+            }
         }
 
         function closeSuccessModal() {
@@ -539,7 +557,7 @@
                 adminView.classList.remove('hidden');
                 tabClient.className = "px-4 py-1.5 rounded-full text-xs font-semibold text-gray-500 hover:text-brand-600 transition-all duration-300";
                 tabAdmin.className = "px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-300 bg-white text-brand-600 shadow-sm";
-                renderAdminAppointments();
+                loadAppointmentsFromCloud();
             } else {
                 adminView.classList.add('hidden');
                 clientView.classList.remove('hidden');
@@ -580,7 +598,7 @@
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
                                 </a>
                             ` : ''}
-                            <button onclick="deleteAppointment('${a.id}')" class="text-red-400 hover:text-red-600 p-1" title="Eliminar registro">
+                            <button onclick="deleteAppointment('${a.idDoc}')" class="text-red-400 hover:text-red-600 p-1" title="Eliminar registro">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </td>
@@ -589,18 +607,18 @@
             }).join('');
         }
 
-        // ELIMINAR CITA O DESBLOQUEAR DE LA NUBE
-        function deleteAppointment(id) {
+        async function deleteAppointment(idDoc) {
             if (confirm('¿Estás seguro de eliminar este registro de la nube?')) {
-                db.collection("citas_diciembre_2026").doc(id).delete().then(() => {
-                    // Se actualiza automático por el listener en tiempo real
-                }).catch(error => {
-                    alert("Error al eliminar: " + error.message);
-                });
+                try {
+                    await window.deleteDoc(window.doc(window.db, "citas_diciembre_2026", idDoc));
+                    loadAppointmentsFromCloud();
+                } catch (error) {
+                    console.error("Error eliminando cita:", error);
+                    alert("No se pudo eliminar el registro.");
+                }
             }
         }
 
-        // CITA MANUAL A LA NUBE
         function openManualModal() {
             const selectDay = document.getElementById('manual-date');
             selectDay.innerHTML = '';
@@ -615,7 +633,7 @@
             document.getElementById('manual-modal').classList.add('hidden');
         }
 
-        function handleManualBooking(e) {
+        async function handleManualBooking(e) {
             e.preventDefault();
             const name = document.getElementById('manual-name').value.trim();
             const phone = document.getElementById('manual-phone').value.trim();
@@ -632,19 +650,21 @@
                 services: [servicesText],
                 total: total,
                 status: 'Confirmada',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: Date.now()
             };
 
-            db.collection("citas_diciembre_2026").add(newManualAppointment).then(() => {
+            try {
+                await window.addDoc(window.collection(window.db, "citas_diciembre_2026"), newManualAppointment);
+                loadAppointmentsFromCloud();
                 closeManualModal();
                 e.target.reset();
                 alert('¡Cita manual registrada en la nube con éxito!');
-            }).catch(error => {
-                alert("Error: " + error.message);
-            });
+            } catch (error) {
+                console.error("Error registrando cita manual:", error);
+                alert("Error al guardar en la nube.");
+            }
         }
 
-        // BLOQUEO A LA NUBE
         function openBlockModal() {
             const selectDay = document.getElementById('block-date');
             selectDay.innerHTML = '';
@@ -659,7 +679,7 @@
             document.getElementById('block-modal').classList.add('hidden');
         }
 
-        function handleBlockSchedule(e) {
+        async function handleBlockSchedule(e) {
             e.preventDefault();
             const date = document.getElementById('block-date').value;
             const time = document.getElementById('block-time').value;
@@ -673,16 +693,19 @@
                 services: [reason],
                 total: 0,
                 status: 'Bloqueado',
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                createdAt: Date.now()
             };
 
-            db.collection("citas_diciembre_2026").add(blockEntry).then(() => {
+            try {
+                await window.addDoc(window.collection(window.db, "citas_diciembre_2026"), blockEntry);
+                loadAppointmentsFromCloud();
                 closeBlockModal();
                 e.target.reset();
                 alert('¡Horario bloqueado en la nube con éxito!');
-            }).catch(error => {
-                alert("Error: " + error.message);
-            });
+            } catch (error) {
+                console.error("Error bloqueando horario:", error);
+                alert("Error al guardar el bloqueo.");
+            }
         }
     </script>
 </body>

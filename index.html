@@ -157,19 +157,22 @@
                 <div class="flex justify-between items-center border-b pb-4">
                     <div>
                         <h2 class="font-serif font-bold text-xl text-gray-800">Panel de Administración</h2>
-                        <p class="text-xs text-gray-500 mt-0.5">Control de citas agendadas para Diciembre 2026.</p>
+                        <p class="text-xs text-gray-500 mt-0.5">Control de citas agendadas y bloqueos para Diciembre 2026.</p>
                     </div>
                     <button onclick="switchView('client')" class="text-xs text-brand-600 font-semibold hover:underline">
                         <i class="fa-solid fa-arrow-left mr-1"></i> Ver Página Pública
                     </button>
                 </div>
 
-                <!-- TAB 1: LISTA DE CITAS -->
+                <!-- TAB 1: LISTA DE CITAS Y BLOQUEOS -->
                 <div id="admin-tab-appointments" class="space-y-4">
                     <div class="bg-white rounded-3xl shadow-sm border border-brand-200 overflow-hidden">
-                        <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Citas de Diciembre</span>
+                        <div class="p-4 bg-gray-50 border-b border-gray-100 flex flex-wrap justify-between items-center gap-2">
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Citas y Bloqueos de Diciembre</span>
                             <div class="space-x-2">
+                                <button onclick="openBlockModal()" class="bg-gray-800 hover:bg-gray-900 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow transition-all">
+                                    <i class="fa-solid fa-ban mr-1"></i> Bloquear Horario / Día
+                                </button>
                                 <button onclick="openManualModal()" class="bg-brand-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow transition-all">
                                     <i class="fa-solid fa-plus mr-1"></i> Agregar Cita Manual
                                 </button>
@@ -181,12 +184,12 @@
                             <table class="w-full text-left border-collapse text-xs">
                                 <thead>
                                     <tr class="bg-gray-50 text-gray-400 border-b border-gray-100">
-                                        <th class="p-3">Clienta</th>
+                                        <th class="p-3">Clienta / Concepto</th>
                                         <th class="p-3">Fecha y Hora</th>
-                                        <th class="p-3">Servicios</th>
+                                        <th class="p-3">Servicios / Motivo</th>
                                         <th class="p-3">Total</th>
                                         <th class="p-3">Estado</th>
-                                        <th class="p-3 text-right">Acciones / Recordatorio</th>
+                                        <th class="p-3 text-right">Acciones</th>
                                     </tr>
                                 </thead>
                                 <tbody id="appointments-table-body" class="divide-y divide-gray-100">
@@ -263,9 +266,47 @@
         </div>
     </div>
 
+    <!-- Modal para Bloquear Horario / Día (Admin) -->
+    <div id="block-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-3xl p-6 max-w-sm w-full space-y-4 shadow-2xl">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-serif font-bold text-lg text-gray-800">Bloquear Horario o Día</h3>
+                <button onclick="closeBlockModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            
+            <form onsubmit="handleBlockSchedule(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Fecha a Bloquear *</label>
+                    <select id="block-date" required class="w-full px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-brand-300">
+                        <!-- Se llena con JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Hora o Bloqueo Total *</label>
+                    <select id="block-time" required class="w-full px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-brand-300">
+                        <option value="TODOS">🚫 Todo el Día (Cerrado)</option>
+                        <option value="08:00 AM">08:00 AM</option>
+                        <option value="10:00 AM">10:00 AM</option>
+                        <option value="02:00 PM">02:00 PM</option>
+                        <option value="05:00 PM">05:00 PM</option>
+                        <option value="07:00 PM">07:00 PM</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-semibold text-gray-700 mb-1">Motivo del Bloqueo *</label>
+                    <input type="text" id="block-reason" required placeholder="Ej: Día libre, diligencia, descanso" class="w-full px-3 py-2 rounded-xl border border-gray-200 outline-none focus:ring-2 focus:ring-brand-300">
+                </div>
+
+                <div class="pt-3 flex justify-end space-x-2">
+                    <button type="button" onclick="closeBlockModal()" class="px-4 py-2 rounded-xl text-gray-500 hover:bg-gray-100">Cancelar</button>
+                    <button type="submit" class="bg-gray-800 hover:bg-gray-900 text-white font-semibold px-5 py-2 rounded-xl shadow">Bloquear</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- SCRIPTS DE LÓGICA -->
     <script>
-        // DATOS DE SERVICIOS
         const servicesList = [
             { id: 's1', name: 'Esmaltado Semi-Permanente', price: 8, duration: '1.5 Horas' },
             { id: 's2', name: 'Nivelación de Uña Natural', price: 15, duration: '2 Horas' },
@@ -274,10 +315,8 @@
             { id: 's5', name: 'Retiro de Sistema / Gel', price: 3.5, duration: '40 Min' }
         ];
 
-        // HORARIOS DISPONIBLES
         const timeSlots = ['08:00 AM', '10:00 AM', '02:00 PM', '05:00 PM', '07:00 PM'];
 
-        // ESTADO GLOBAL
         let state = {
             selectedServices: [],
             selectedDate: null,
@@ -290,7 +329,6 @@
             renderDecemberCalendar();
         };
 
-        // RENDERIZAR SERVICIOS
         function renderServices() {
             const container = document.getElementById('services-container');
             container.innerHTML = servicesList.map(s => `
@@ -319,35 +357,43 @@
             updateBookingSummary();
         }
 
-        // CALENDARIO DE DICIEMBRE 2026
         function renderDecemberCalendar() {
             const calendarGrid = document.getElementById('december-calendar');
             calendarGrid.innerHTML = '';
 
-            // Días de la semana abreviados
             const daysOfWeek = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
             daysOfWeek.forEach(d => {
                 calendarGrid.innerHTML += `<span class="text-[10px] font-bold text-gray-400 py-1">${d}</span>`;
             });
 
-            // Diciembre 2026 comienza en Martes (dejamos un espacio en blanco para Lunes)
             calendarGrid.innerHTML += `<div></div>`;
 
             for (let d = 1; d <= 31; d++) {
                 const dateStr = `2026-12-${d.toString().padStart(2, '0')}`;
                 const isSelected = state.selectedDate === dateStr;
+                
+                const hasAppointments = state.appointments.some(a => a.date === dateStr);
+                const isFullyBlocked = state.appointments.some(a => a.date === dateStr && a.time === 'TODOS');
 
                 calendarGrid.innerHTML += `
                     <button type="button" onclick="selectDate('${dateStr}')" 
-                        class="h-8 rounded-xl text-xs font-medium transition-all flex items-center justify-center 
-                        ${isSelected ? 'bg-brand-500 text-white font-bold shadow' : 'bg-brand-50/50 text-gray-700 hover:bg-brand-100 border border-brand-200'}">
+                        class="h-8 rounded-xl text-xs font-medium transition-all relative flex items-center justify-center 
+                        ${isFullyBlocked ? 'bg-red-50 text-red-400 border border-red-200 line-through' : (isSelected ? 'bg-brand-500 text-white font-bold shadow' : 'bg-brand-50/50 text-gray-700 hover:bg-brand-100 border border-brand-200')}">
                         ${d}
+                        ${hasAppointments && !isSelected && !isFullyBlocked ? '<span class="absolute bottom-1 w-1 h-1 bg-brand-500 rounded-full"></span>' : ''}
                     </button>
                 `;
             }
         }
 
         function selectDate(dateStr) {
+            // Verificar si el día está bloqueado por completo
+            const isFullyBlocked = state.appointments.some(a => a.date === dateStr && a.time === 'TODOS');
+            if (isFullyBlocked) {
+                alert('Este día se encuentra cerrado / bloqueado por Angélica.');
+                return;
+            }
+
             state.selectedDate = dateStr;
             renderDecemberCalendar();
 
@@ -359,12 +405,20 @@
 
         function renderTimeSlots() {
             const grid = document.getElementById('time-slots-grid');
+            
+            // Verificar si todo el día está bloqueado
+            const isFullyBlocked = state.appointments.some(a => a.date === state.selectedDate && a.time === 'TODOS');
+            if (isFullyBlocked) {
+                grid.innerHTML = `<div class="col-span-3 text-center text-xs text-red-500 py-4 font-semibold">Día completamente cerrado por mantenimiento o descanso.</div>`;
+                return;
+            }
+
             grid.innerHTML = timeSlots.map(time => {
-                const isBooked = state.appointments.some(a => a.date === state.selectedDate && a.time === time);
+                const isBooked = state.appointments.some(a => a.date === state.selectedDate && (a.time === time || a.time === 'TODOS'));
                 const isSelected = state.selectedTime === time;
 
                 if (isBooked) {
-                    return `<button disabled class="py-2 rounded-xl text-[11px] font-medium bg-gray-100 text-gray-300 cursor-not-allowed">Ocupado</button>`;
+                    return `<button disabled class="py-2 rounded-xl text-[11px] font-medium bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 line-through">Ocupado / Bloqueado</button>`;
                 }
 
                 return `
@@ -396,7 +450,6 @@
             }
         }
 
-        // CONFIRMAR CITA DESDE CLIENTE
         function handleClientBooking(e) {
             e.preventDefault();
             const name = document.getElementById('client-name').value.trim();
@@ -418,7 +471,6 @@
             state.appointments.push(newAppointment);
             localStorage.setItem('ao_december_appointments', JSON.stringify(state.appointments));
 
-            // Abrir WhatsApp de Angélica (Número de ejemplo de Venezuela o genérico)
             const mensaje = `Hola Angélica! 💅 Quisiera confirmar mi cita agendada en la web:%0A%0A*Clienta:* ${name}%0A*Teléfono:* ${phone}%0A*Fecha:* ${state.selectedDate}%0A*Hora:* ${state.selectedTime}%0A*Servicios:* ${serviceNames}%0A*Total:* $${total.toFixed(2)}`;
             window.open(`https://wa.me/584120000000?text=${mensaje}`, '_blank');
 
@@ -430,7 +482,6 @@
             location.reload();
         }
 
-        // CAMBIO DE VISTAS Y ADMIN
         function switchView(view) {
             const clientView = document.getElementById('view-client');
             const adminView = document.getElementById('view-admin');
@@ -457,47 +508,52 @@
             }
         }
 
-        // RENDERIZAR TABLA DE ADMIN
         function renderAdminAppointments() {
             const tbody = document.getElementById('appointments-table-body');
             
             if (state.appointments.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">No hay citas registradas todavía.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">No hay citas ni bloqueos registrados todavía.</td></tr>`;
                 return;
             }
 
-            tbody.innerHTML = state.appointments.map(a => `
-                <tr class="hover:bg-gray-50/50">
-                    <td class="p-3">
-                        <span class="font-bold block text-gray-800">${a.clientName}</span>
-                        <span class="text-[11px] text-gray-400">${a.clientPhone}</span>
-                    </td>
-                    <td class="p-3">
-                        <span class="font-semibold block">${a.date}</span>
-                        <span class="text-[11px] text-brand-600">${a.time}</span>
-                    </td>
-                    <td class="p-3 text-gray-600">${Array.isArray(a.services) ? a.services.join(', ') : a.services}</td>
-                    <td class="p-3 font-serif font-bold text-brand-600">$${a.total.toFixed(2)}</td>
-                    <td class="p-3">
-                        <span class="px-2 py-0.5 bg-green-50 text-green-600 rounded-full text-[10px] font-semibold">${a.status}</span>
-                    </td>
-                    <td class="p-3 text-right space-x-2">
-                        <a href="https://wa.me/${a.clientPhone.replace(/\D/g,'')}?text=Hola%20${a.clientName},%20te%20escribo%20de%20Angélica%20Oliva%20Nails%20Studio%20para%20recordarte%20tu%20cita%20el%20${a.date}%20a%20las%20${a.time}." target="_blank" class="text-green-600 hover:text-green-800 p-1" title="Recordar por WhatsApp">
-                            <i class="fa-brands fa-whatsapp text-sm"></i>
-                        </a>
-                        <button onclick="deleteAppointment('${a.id}')" class="text-red-400 hover:text-red-600 p-1" title="Eliminar cita">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = state.appointments.map(a => {
+                const isBlock = a.status === 'Bloqueado';
+                return `
+                    <tr class="hover:bg-gray-50/50 ${isBlock ? 'bg-red-50/30' : ''}">
+                        <td class="p-3">
+                            <span class="font-bold block text-gray-800">${a.clientName}</span>
+                            <span class="text-[11px] text-gray-400">${a.clientPhone || 'Bloqueo administrativo'}</span>
+                        </td>
+                        <td class="p-3">
+                            <span class="font-semibold block">${a.date}</span>
+                            <span class="text-[11px] text-brand-600">${a.time}</span>
+                        </td>
+                        <td class="p-3 text-gray-600">${Array.isArray(a.services) ? a.services.join(', ') : a.services}</td>
+                        <td class="p-3 font-serif font-bold text-brand-600">${isBlock ? '-' : '$'+a.total.toFixed(2)}</td>
+                        <td class="p-3">
+                            <span class="px-2 py-0.5 ${isBlock ? 'bg-red-100 text-red-600' : 'bg-green-50 text-green-600'} rounded-full text-[10px] font-semibold">${a.status}</span>
+                        </td>
+                        <td class="p-3 text-right space-x-2">
+                            ${!isBlock ? `
+                                <a href="https://wa.me/${a.clientPhone.replace(/\D/g,'')}?text=Hola%20${a.clientName},%20te%20escribo%20de%20Angélica%20Oliva%20Nails%20Studio%20para%20recordarte%20tu%20cita%20el%20${a.date}%20a%20las%20${a.time}." target="_blank" class="text-green-600 hover:text-green-800 p-1" title="Recordar por WhatsApp">
+                                    <i class="fa-brands fa-whatsapp text-sm"></i>
+                                </a>
+                            ` : ''}
+                            <button onclick="deleteAppointment('${a.id}')" class="text-red-400 hover:text-red-600 p-1" title="Eliminar registro">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function deleteAppointment(id) {
-            if (confirm('¿Estás seguro de eliminar esta cita?')) {
+            if (confirm('¿Estás seguro de eliminar este registro o desbloquear este horario?')) {
                 state.appointments = state.appointments.filter(a => a.id !== id);
                 localStorage.setItem('ao_december_appointments', JSON.stringify(state.appointments));
                 renderAdminAppointments();
+                renderDecemberCalendar();
             }
         }
 
@@ -540,9 +596,52 @@
             localStorage.setItem('ao_december_appointments', JSON.stringify(state.appointments));
             
             renderAdminAppointments();
+            renderDecemberCalendar();
             closeManualModal();
             e.target.reset();
             alert('¡Cita manual registrada con éxito!');
+        }
+
+        // FUNCIONES DE BLOQUEO DE HORARIO / DÍA (ADMIN)
+        function openBlockModal() {
+            const selectDay = document.getElementById('block-date');
+            selectDay.innerHTML = '';
+            for(let d=1; d<=31; d++) {
+                const dateStr = `2026-12-${d.toString().padStart(2, '0')}`;
+                selectDay.innerHTML += `<option value="${dateStr}">Diciembre ${d}, 2026</option>`;
+            }
+            document.getElementById('block-modal').classList.remove('hidden');
+        }
+
+        function closeBlockModal() {
+            document.getElementById('block-modal').classList.add('hidden');
+        }
+
+        function handleBlockSchedule(e) {
+            e.preventDefault();
+            const date = document.getElementById('block-date').value;
+            const time = document.getElementById('block-time').value;
+            const reason = document.getElementById('block-reason').value.trim();
+
+            const blockEntry = {
+                id: 'block-' + Date.now(),
+                clientName: '🔒 BLOQUEO (No laborable)',
+                clientPhone: '',
+                date: date,
+                time: time,
+                services: [reason],
+                total: 0,
+                status: 'Bloqueado'
+            };
+
+            state.appointments.push(blockEntry);
+            localStorage.setItem('ao_december_appointments', JSON.stringify(state.appointments));
+
+            renderAdminAppointments();
+            renderDecemberCalendar();
+            closeBlockModal();
+            e.target.reset();
+            alert('¡Horario bloqueado con éxito!');
         }
     </script>
 </body>

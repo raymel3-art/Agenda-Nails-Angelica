@@ -523,7 +523,7 @@
             document.getElementById('total-price').innerText = `$${total.toFixed(2)}`;
         }
 
-        // RENDER CALENDARIO DICIEMBRE 2026
+       // RENDER CALENDARIO DICIEMBRE 2026 CORREGIDO PARA BLOQUEOS
         function renderDecemberCalendar() {
             const calendar = document.getElementById('december-calendar');
             calendar.innerHTML = '';
@@ -534,12 +534,14 @@
 
             for(let day=1; day<=31; day++) {
                 const dateStr = `2026-12-${day.toString().padStart(2, '0')}`;
+                
+                // Verificar si el día completo está bloqueado en el panel admin
                 const isFullyBlocked = state.blockedSlots.some(b => b.date === dateStr && b.time === 'ALL');
                 const isSelected = state.selectedDate === dateStr;
 
                 let classes = "h-10 rounded-xl flex items-center justify-center font-medium text-xs transition-all cursor-pointer ";
                 if(isFullyBlocked) {
-                    classes += "bg-gray-100 text-gray-300 cursor-not-allowed line-through";
+                    classes += "bg-gray-100 text-gray-400 cursor-not-allowed line-through opacity-60";
                 } else if(isSelected) {
                     classes += "bg-brand-500 text-white shadow-md font-bold";
                 } else {

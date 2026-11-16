@@ -11,6 +11,10 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
     
+    <!-- Firebase Cloud Sync -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -156,8 +160,8 @@
             <div class="bg-white rounded-3xl p-6 shadow-sm border border-brand-200 space-y-6">
                 <div class="flex justify-between items-center border-b pb-4">
                     <div>
-                        <h2 class="font-serif font-bold text-xl text-gray-800">Panel de Administración</h2>
-                        <p class="text-xs text-gray-500 mt-0.5">Control de citas agendadas y bloqueos para Diciembre 2026.</p>
+                        <h2 class="font-serif font-bold text-xl text-gray-800">Panel de Administración (Nube)</h2>
+                        <p class="text-xs text-gray-500 mt-0.5">Control sincronizado en tiempo real para Diciembre 2026.</p>
                     </div>
                     <button onclick="switchView('client')" class="text-xs text-brand-600 font-semibold hover:underline">
                         <i class="fa-solid fa-arrow-left mr-1"></i> Ver Página Pública
@@ -168,7 +172,7 @@
                 <div id="admin-tab-appointments" class="space-y-4">
                     <div class="bg-white rounded-3xl shadow-sm border border-brand-200 overflow-hidden">
                         <div class="p-4 bg-gray-50 border-b border-gray-100 flex flex-wrap justify-between items-center gap-2">
-                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Citas y Bloqueos de Diciembre</span>
+                            <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Citas y Bloqueos en la Nube</span>
                             <div class="space-x-2">
                                 <button onclick="openBlockModal()" class="bg-gray-800 hover:bg-gray-900 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow transition-all">
                                     <i class="fa-solid fa-ban mr-1"></i> Bloquear Horario / Día
@@ -176,7 +180,7 @@
                                 <button onclick="openManualModal()" class="bg-brand-500 hover:bg-brand-600 text-white px-3 py-1.5 rounded-xl text-xs font-semibold shadow transition-all">
                                     <i class="fa-solid fa-plus mr-1"></i> Agregar Cita Manual
                                 </button>
-                                <button onclick="renderAdminAppointments()" class="text-xs text-brand-600 hover:underline"><i class="fa-solid fa-rotate mr-1"></i>Actualizar</button>
+                                <button onclick="loadAppointmentsFromCloud()" class="text-xs text-brand-600 hover:underline"><i class="fa-solid fa-rotate mr-1"></i>Actualizar</button>
                             </div>
                         </div>
 
@@ -210,7 +214,7 @@
             <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto text-xl">
                 <i class="fa-solid fa-check"></i>
             </div>
-            <h3 class="font-serif font-bold text-lg text-gray-800">¡Cita Registrada con Éxito!</h3>
+            <h3 class="font-serif font-bold text-lg text-gray-800">¡Cita Registrada en la Nube!</h3>
             <p class="text-xs text-gray-500">Se abrirá tu WhatsApp para enviar el mensaje de confirmación a Angélica.</p>
             <button onclick="closeSuccessModal()" class="w-full bg-brand-500 text-white font-semibold py-2 rounded-xl text-xs shadow">Entendido</button>
         </div>
@@ -305,8 +309,24 @@
         </div>
     </div>
 
-    <!-- SCRIPTS DE LÓGICA -->
+    <!-- SCRIPTS CONECTADOS A FIREBASE -->
     <script>
+        // CONFIGURACIÓN DE FIREBASE (Base de datos en la nube gratuita)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDummyKeyForAngelicaNailsStudio2026",
+            authDomain: "angelica-nails-db.firebaseapp.com",
+            projectId: "angelica-nails-db-2026",
+            storageBucket: "angelica-nails-db.appspot.com",
+            messagingSenderId: "1234567890",
+            appId: "1:1234567890:web:abcdef"
+        };
+
+        // Inicializar Firebase (usando Firestore offline fallback si es necesario)
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
         const servicesList = [
             { id: 's1', name: 'Esmaltado Semi-Permanente', price: 8, duration: '1.5 Horas' },
             { id: 's2', name: 'Nivelación de Uña Natural', price: 15, duration: '2 Horas' },
@@ -321,13 +341,32 @@
             selectedServices: [],
             selectedDate: null,
             selectedTime: null,
-            appointments: JSON.parse(localStorage.getItem('ao_december_appointments')) || []
+            appointments: []
         };
 
         window.onload = function() {
             renderServices();
-            renderDecemberCalendar();
+            loadAppointmentsFromCloud();
         };
+
+        // CARGAR CITAS DESDE LA NUBE EN TIEMPO REAL
+        function loadAppointmentsFromCloud() {
+            db.collection("citas_diciembre_2026").onSnapshot((snapshot) => {
+                state.appointments = [];
+                snapshot.forEach((doc) => {
+                    state.appointments.push({ id: doc.id, ...doc.data() });
+                });
+                renderDecemberCalendar();
+                if(document.getElementById('view-admin').classList.contains('hidden') === false) {
+                    renderAdminAppointments();
+                }
+            }, (error) => {
+                console.log("Modo local temporal activado por error de red:", error);
+                // Respaldo local si falla la red momentáneamente
+                state.appointments = JSON.parse(localStorage.getItem('ao_december_appointments')) || [];
+                renderDecemberCalendar();
+            });
+        }
 
         function renderServices() {
             const container = document.getElementById('services-container');
@@ -359,6 +398,7 @@
 
         function renderDecemberCalendar() {
             const calendarGrid = document.getElementById('december-calendar');
+            if (!calendarGrid) return;
             calendarGrid.innerHTML = '';
 
             const daysOfWeek = ['Lu', 'Ma', 'Mi', 'Ju', 'Vi', 'Sá', 'Do'];
@@ -387,7 +427,6 @@
         }
 
         function selectDate(dateStr) {
-            // Verificar si el día está bloqueado por completo
             const isFullyBlocked = state.appointments.some(a => a.date === dateStr && a.time === 'TODOS');
             if (isFullyBlocked) {
                 alert('Este día se encuentra cerrado / bloqueado por Angélica.');
@@ -405,8 +444,8 @@
 
         function renderTimeSlots() {
             const grid = document.getElementById('time-slots-grid');
+            if (!grid) return;
             
-            // Verificar si todo el día está bloqueado
             const isFullyBlocked = state.appointments.some(a => a.date === state.selectedDate && a.time === 'TODOS');
             if (isFullyBlocked) {
                 grid.innerHTML = `<div class="col-span-3 text-center text-xs text-red-500 py-4 font-semibold">Día completamente cerrado por mantenimiento o descanso.</div>`;
@@ -450,6 +489,7 @@
             }
         }
 
+        // GUARDAR CITA DESDE EL CLIENTE DIRECTO A LA NUBE
         function handleClientBooking(e) {
             e.preventDefault();
             const name = document.getElementById('client-name').value.trim();
@@ -458,23 +498,23 @@
             const serviceNames = state.selectedServices.map(s => s.name).join(', ');
 
             const newAppointment = {
-                id: 'cita-' + Date.now(),
                 clientName: name,
                 clientPhone: phone,
                 date: state.selectedDate,
                 time: state.selectedTime,
                 services: state.selectedServices.map(s => s.name),
                 total: total,
-                status: 'Confirmada'
+                status: 'Confirmada',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            state.appointments.push(newAppointment);
-            localStorage.setItem('ao_december_appointments', JSON.stringify(state.appointments));
-
-            const mensaje = `Hola Angélica! 💅 Quisiera confirmar mi cita agendada en la web:%0A%0A*Clienta:* ${name}%0A*Teléfono:* ${phone}%0A*Fecha:* ${state.selectedDate}%0A*Hora:* ${state.selectedTime}%0A*Servicios:* ${serviceNames}%0A*Total:* $${total.toFixed(2)}`;
-            window.open(`https://wa.me/584125689028?text=${mensaje}`, '_blank');
-
-            document.getElementById('success-modal').classList.remove('hidden');
+            db.collection("citas_diciembre_2026").add(newAppointment).then(() => {
+                const mensaje = `Hola Angélica! 💅 Quisiera confirmar mi cita agendada en la web:%0A%0A*Clienta:* ${name}%0A*Teléfono:* ${phone}%0A*Fecha:* ${state.selectedDate}%0A*Hora:* ${state.selectedTime}%0A*Servicios:* ${serviceNames}%0A*Total:* $${total.toFixed(2)}`;
+                window.open(`https://wa.me/584125689028?text=${mensaje}`, '_blank');
+                document.getElementById('success-modal').classList.remove('hidden');
+            }).catch(error => {
+                alert("Error al guardar en la nube: " + error.message);
+            });
         }
 
         function closeSuccessModal() {
@@ -510,9 +550,10 @@
 
         function renderAdminAppointments() {
             const tbody = document.getElementById('appointments-table-body');
+            if (!tbody) return;
             
             if (state.appointments.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">No hay citas ni bloqueos registrados todavía.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-400">No hay citas ni bloqueos registrados en la nube todavía.</td></tr>`;
                 return;
             }
 
@@ -529,12 +570,12 @@
                             <span class="text-[11px] text-brand-600">${a.time}</span>
                         </td>
                         <td class="p-3 text-gray-600">${Array.isArray(a.services) ? a.services.join(', ') : a.services}</td>
-                        <td class="p-3 font-serif font-bold text-brand-600">${isBlock ? '-' : '$'+a.total.toFixed(2)}</td>
+                        <td class="p-3 font-serif font-bold text-brand-600">${isBlock ? '-' : '$'+(a.total ? a.total.toFixed(2) : '0.00')}</td>
                         <td class="p-3">
                             <span class="px-2 py-0.5 ${isBlock ? 'bg-red-100 text-red-600' : 'bg-green-50 text-green-600'} rounded-full text-[10px] font-semibold">${a.status}</span>
                         </td>
                         <td class="p-3 text-right space-x-2">
-                            ${!isBlock ? `
+                            ${!isBlock && a.clientPhone ? `
                                 <a href="https://wa.me/${a.clientPhone.replace(/\D/g,'')}?text=Hola%20${a.clientName},%20te%20escribo%20de%20Angélica%20Oliva%20Nails%20Studio%20para%20recordarte%20tu%20cita%20el%20${a.date}%20a%20las%20${a.time}." target="_blank" class="text-green-600 hover:text-green-800 p-1" title="Recordar por WhatsApp">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
                                 </a>
@@ -548,16 +589,18 @@
             }).join('');
         }
 
+        // ELIMINAR CITA O DESBLOQUEAR DE LA NUBE
         function deleteAppointment(id) {
-            if (confirm('¿Estás seguro de eliminar este registro o desbloquear este horario?')) {
-                state.appointments = state.appointments.filter(a => a.id !== id);
-                localStorage.setItem('ao_december_appointments', JSON.stringify(state.appointments));
-                renderAdminAppointments();
-                renderDecemberCalendar();
+            if (confirm('¿Estás seguro de eliminar este registro de la nube?')) {
+                db.collection("citas_diciembre_2026").doc(id).delete().then(() => {
+                    // Se actualiza automático por el listener en tiempo real
+                }).catch(error => {
+                    alert("Error al eliminar: " + error.message);
+                });
             }
         }
 
-        // FUNCIONES DE CITA MANUAL (ADMIN)
+        // CITA MANUAL A LA NUBE
         function openManualModal() {
             const selectDay = document.getElementById('manual-date');
             selectDay.innerHTML = '';
@@ -582,27 +625,26 @@
             const total = parseFloat(document.getElementById('manual-total').value);
 
             const newManualAppointment = {
-                id: 'cita-manual-' + Date.now(),
                 clientName: name,
                 clientPhone: phone,
                 date: date,
                 time: time,
                 services: [servicesText],
                 total: total,
-                status: 'Confirmada'
+                status: 'Confirmada',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            state.appointments.push(newManualAppointment);
-            localStorage.setItem('ao_december_appointments', JSON.stringify(state.appointments));
-            
-            renderAdminAppointments();
-            renderDecemberCalendar();
-            closeManualModal();
-            e.target.reset();
-            alert('¡Cita manual registrada con éxito!');
+            db.collection("citas_diciembre_2026").add(newManualAppointment).then(() => {
+                closeManualModal();
+                e.target.reset();
+                alert('¡Cita manual registrada en la nube con éxito!');
+            }).catch(error => {
+                alert("Error: " + error.message);
+            });
         }
 
-        // FUNCIONES DE BLOQUEO DE HORARIO / DÍA (ADMIN)
+        // BLOQUEO A LA NUBE
         function openBlockModal() {
             const selectDay = document.getElementById('block-date');
             selectDay.innerHTML = '';
@@ -624,24 +666,23 @@
             const reason = document.getElementById('block-reason').value.trim();
 
             const blockEntry = {
-                id: 'block-' + Date.now(),
                 clientName: '🔒 BLOQUEO (No laborable)',
                 clientPhone: '',
                 date: date,
                 time: time,
                 services: [reason],
                 total: 0,
-                status: 'Bloqueado'
+                status: 'Bloqueado',
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            state.appointments.push(blockEntry);
-            localStorage.setItem('ao_december_appointments', JSON.stringify(state.appointments));
-
-            renderAdminAppointments();
-            renderDecemberCalendar();
-            closeBlockModal();
-            e.target.reset();
-            alert('¡Horario bloqueado con éxito!');
+            db.collection("citas_diciembre_2026").add(blockEntry).then(() => {
+                closeBlockModal();
+                e.target.reset();
+                alert('¡Horario bloqueado en la nube con éxito!');
+            }).catch(error => {
+                alert("Error: " + error.message);
+            });
         }
     </script>
 </body>

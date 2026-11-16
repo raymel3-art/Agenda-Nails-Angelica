@@ -523,17 +523,51 @@
             document.getElementById('total-price').innerText = `$${total.toFixed(2)}`;
         }
 
-    // RENDER DE HORARIOS DISPONIBLES CON BLOQUEO DE HORAS SUELTAS
+// 1. RENDERIZAR CALENDARIO DE DICIEMBRE
+        function renderDecemberCalendar() {
+            const calendar = document.getElementById('december-calendar');
+            if (!calendar) return; // Por seguridad si el elemento no existe
+            calendar.innerHTML = '';
+
+            for(let i=0; i<2; i++) {
+                calendar.innerHTML += `<div></div>`;
+            }
+
+            for(let day=1; day<=31; day++) {
+                const dateStr = `2026-12-${day.toString().padStart(2, '0')}`;
+                
+                // Verificar si el día entero está bloqueado
+                const isFullyBlocked = state.blockedSlots.some(b => b.date === dateStr && b.time === 'ALL');
+                const isSelected = state.selectedDate === dateStr;
+
+                let classes = "h-10 rounded-xl flex items-center justify-center font-medium text-xs transition-all cursor-pointer ";
+                if(isFullyBlocked) {
+                    classes += "bg-gray-100 text-gray-400 cursor-not-allowed line-through opacity-60";
+                } else if(isSelected) {
+                    classes += "bg-brand-500 text-white shadow-md font-bold";
+                } else {
+                    classes += "hover:bg-brand-100 text-gray-700 bg-white border border-gray-100";
+                }
+
+                calendar.innerHTML += `
+                    <button type="button" ${isFullyBlocked ? 'disabled' : ''} onclick="selectDate('${dateStr}')" class="${classes}">
+                        ${day}
+                    </button>
+                `;
+            }
+        }
+
+        // 2. RENDER DE HORARIOS DISPONIBLES CON BLOQUEO DE HORAS SUELTAS
         function renderTimeSlots(dateStr) {
             const container = document.getElementById('slots-container');
             const slotsDiv = document.getElementById('time-slots');
+            if (!container || !slotsDiv) return;
             container.classList.remove('hidden');
 
             const dateObj = new Date(dateStr + "T00:00:00");
             document.getElementById('selected-date-text').innerText = dateObj.toLocaleDateString('es-ES', { day: 'numeric', month: 'long' });
 
             slotsDiv.innerHTML = TIME_SLOTS.map(time => {
-                // Verificar si el día entero está bloqueado (ALL) O si esta hora específica está bloqueada
                 const isDayBlocked = state.blockedSlots.some(b => b.date === dateStr && b.time === 'ALL');
                 const isHourBlocked = state.blockedSlots.some(b => b.date === dateStr && b.time === time);
                 const isBooked = state.appointments.some(a => a.date === dateStr && a.time === time && a.status !== 'Cancelada');
